@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 몸통 -->
+  <path d="M8 12C8 8 12 4 16 4C20 4 24 8 24 12V24C24 26.2091 22.2091 28 20 28H12C9.79086 28 8 26.2091 8 24V12Z" fill="#90EE90"/>
+  
+  <!-- 얼굴 -->
+  <circle cx="16" cy="14" r="6" fill="#F0FFF0"/>
+  <ellipse cx="14" cy="13" rx="1" ry="1.5" fill="#000000"/>
+  <ellipse cx="18" cy="13" rx="1" ry="1.5" fill="#000000"/>
+  <path d="M15 16C15.5 16.5 16.5 16.5 17 16" stroke="#000000" stroke-width="0.5" stroke-linecap="round"/>
+  
+  <!-- 새싹 -->
+  <path d="M15 2C15 2 14 3 14 4C14 5 16 6 16 6C16 6 18 5 18 4C18 3 17 2 17 2" fill="#90EE90"/>
+</svg> 

@@ -1,0 +1,316 @@
+<template>
+  <div class="min-h-screen px-4 py-8">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-2xl font-bold mb-6">주변 은행 찾기</h2>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- 왼쪽 영역 -->
+        <div class="lg:col-span-4 space-y-6">
+          <!-- 검색 박스 -->
+          <div class="bg-white rounded-3xl shadow-lg p-6">
+            <h3 class="text-lg font-semibold mb-4">은행 검색</h3>
+            <div class="space-y-4">
+              <!-- 시/도 선택 -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">시/도 *</label>
+                <div class="relative">
+                  <select
+                    v-model="selectedSido"
+                    @change="onSidoChange"
+                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#006775] focus:border-transparent appearance-none bg-white cursor-pointer"
+                    required
+                  >
+                    <option value="" disabled selected>선택해주세요</option>
+                    <option v-for="region in mapInfo" :key="region.name" :value="region.name">{{ region.name }}</option>
+                  </select>
+                  <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                    <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 시/군/구 선택 -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">시/군/구 *</label>
+                <div class="relative">
+                  <select
+                    v-model="selectedSigungu"
+                    @change="onSigunguChange"
+                    :disabled="!selectedSido"
+                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#006775] focus:border-transparent appearance-none bg-white cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    required
+                  >
+                    <option value="" disabled selected>선택해주세요</option>
+                    <option v-for="sigungu in sigunguList" :key="sigungu" :value="sigungu">{{ sigungu }}</option>
+                  </select>
+                  <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                    <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 은행 선택 -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">은행 *</label>
+                <div class="relative">
+                  <select
+                    v-model="selectedBank"
+                    :disabled="!selectedSigungu"
+                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#006775] focus:border-transparent appearance-none bg-white cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    required
+                  >
+                    <option value="" disabled selected>선택해주세요</option>
+                    <option v-for="bank in bankInfo" :key="bank" :value="bank">{{ bank }}</option>
+                  </select>
+                  <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                    <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 검색하기 버튼 -->
+              <button
+                @click="displayMarkers"
+                :disabled="!selectedBank"
+                class="w-full bg-[#006775] text-white py-3 px-4 rounded-lg hover:bg-[#005766] transition-colors mt-4 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                검색하기
+              </button>
+            </div>
+          </div>
+
+          <!-- 은행 정보 박스 -->
+          <div v-if="selectedPlace" class="bg-white rounded-3xl shadow-lg p-6">
+            <h3 class="text-lg font-semibold mb-4">은행 정보</h3>
+            <div class="space-y-3">
+              <div>
+                <p class="text-sm text-gray-500">지점명</p>
+                <p class="font-medium">{{ selectedPlace.place_name }}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">주소</p>
+                <p class="font-medium">{{ selectedPlace.address_name }}</p>
+              </div>
+              <div v-if="selectedPlace.phone">
+                <p class="text-sm text-gray-500">전화번호</p>
+                <p class="font-medium">{{ selectedPlace.phone }}</p>
+              </div>
+              <div v-if="selectedPlace.road_address_name">
+                <p class="text-sm text-gray-500">도로명 주소</p>
+                <p class="font-medium">{{ selectedPlace.road_address_name }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 오른쪽 지도 영역 -->
+        <div class="lg:col-span-8 bg-white rounded-3xl shadow-lg" style="min-height: 600px;">
+          <div id="map" class="w-full h-full rounded-3xl">
+            <div v-if="!mapLoaded" class="flex items-center justify-center h-full text-gray-500">
+              지도를 불러오는 중입니다...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import config from '@/config/apikey.js'
+import mapData from '@/data/data.json'
+
+// 반응형 상태 정의
+const map = ref(null)
+const ps = ref(null)
+const markers = ref([])
+const destInfo = ref(null)
+const mapLoaded = ref(false)
+
+const mapInfo = ref(mapData.mapInfo)
+const bankInfo = ref(mapData.bankInfo)
+const sigunguList = ref([])
+const bankList = ref([])
+
+const selectedSido = ref('')
+const selectedSigungu = ref('')
+const selectedBank = ref('')
+const selectedPlace = ref(null)
+const showMessage = ref(false)
+
+// 지도 초기화
+const initMap = () => {
+  try {
+    const container = document.getElementById('map')
+    if (!container) {
+      console.error('지도 컨테이너를 찾을 수 없습니다')
+      return
+    }
+    
+    const options = {
+      center: new window.kakao.maps.LatLng(33.450701, 126.570667), // 초기 중심 좌표
+      level: 3
+    }
+    
+    map.value = new window.kakao.maps.Map(container, options)
+    ps.value = new window.kakao.maps.services.Places()
+    destInfo.value = new window.kakao.maps.InfoWindow({ removable: true })
+    mapLoaded.value = true
+  } catch (error) {
+    console.error('지도 초기화 중 오류 발생:', error)
+  }
+}
+
+// 시/도 선택 변경 시
+const onSidoChange = () => {
+  selectedSigungu.value = ''
+  sigunguList.value = []
+  bankList.value = []
+  selectedBank.value = ''
+  selectedPlace.value = null
+  showMessage.value = false
+  const region = mapInfo.value.find(x => x.name === selectedSido.value)
+  if (!region) return
+  sigunguList.value = [...region.countries]
+}
+
+// 시/군/구 선택 변경 시
+const onSigunguChange = () => {
+  selectedBank.value = ''
+  bankList.value = selectedSigungu.value ? [...bankInfo.value] : []
+  selectedPlace.value = null
+  showMessage.value = false
+}
+
+// 마커 초기화
+const clearMarkers = () => {
+  markers.value.forEach(obj => obj.marker.setMap(null))
+  markers.value = []
+}
+
+// 정보창 초기화
+const clearInfos = () => {
+  if (destInfo.value) destInfo.value.close()
+  selectedPlace.value = null
+}
+
+// 마커 표시
+const displayMarkers = () => {
+  if (!ps.value) {
+    alert('지도가 아직 초기화되지 않았습니다.')
+    return
+  }
+  
+  try {
+    showMessage.value = true
+    clearMarkers()
+    clearInfos()
+
+    const query = `${selectedSido.value} ${selectedSigungu.value} ${selectedBank.value}`
+    ps.value.keywordSearch(query, (places, status) => {
+      if (status === window.kakao.maps.services.Status.ZERO_RESULT) {
+        alert('검색 결과가 없습니다.')
+        return
+      }
+      if (status !== window.kakao.maps.services.Status.OK) {
+        alert('검색 중 오류가 발생했습니다.')
+        return
+      }
+      
+      const bounds = new window.kakao.maps.LatLngBounds()
+      places.forEach(p => {
+        const pos = new window.kakao.maps.LatLng(p.y, p.x)
+        const m = new window.kakao.maps.Marker({ map: map.value, position: pos })
+        markers.value.push({ marker: m, place: p })
+        bounds.extend(pos)
+        window.kakao.maps.event.addListener(m, 'click', () => {
+          clearInfos()
+          selectedPlace.value = p
+        })
+      })
+      map.value.setBounds(bounds)
+    })
+  } catch (error) {
+    console.error('마커 표시 중 오류 발생:', error)
+    alert('지도 표시 중 오류가 발생했습니다.')
+  }
+}
+
+// 컴포넌트 마운트 시 초기화
+onMounted(() => {
+  // window.kakao가 로드될 때까지 대기
+  const initializeMap = () => {
+    if (window.kakao && window.kakao.maps) {
+      initMap()
+    } else {
+      setTimeout(initializeMap, 100)
+    }
+  }
+  
+  initializeMap()
+})
+</script>
+
+<style scoped>
+select {
+  /* Firefox */
+  -moz-appearance: none;
+  /* Safari and Chrome */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* 드롭다운 메뉴가 아래로 펼쳐지도록 설정 */
+select {
+  position: relative;
+}
+
+/* 드롭다운 메뉴의 위치와 방향 설정 */
+select:not([multiple]) {
+  background-color: white;
+}
+
+/* 드롭다운 옵션 스타일링 */
+select option {
+  position: absolute;
+  background-color: white;
+  color: black;
+  padding: 8px;
+}
+
+/* Firefox에서 드롭다운 방향 설정 */
+@-moz-document url-prefix() {
+  select {
+    text-indent: 0;
+  }
+  select option {
+    direction: ltr;
+    position: relative !important;
+  }
+}
+
+/* Chrome/Safari에서 드롭다운 방향 설정 */
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+  select {
+    text-indent: 0;
+  }
+  select option {
+    direction: ltr;
+    position: relative !important;
+  }
+}
+
+.place-info {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+</style> 

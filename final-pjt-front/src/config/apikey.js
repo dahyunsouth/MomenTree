@@ -1,0 +1,4 @@
+export default {
+    KAKAO_KEY: 'b24993c4b32453e79c3579ab91ff4f2e',
+    REST_API_KEY: '6e543a9ec167072252a4f9742b9361c2',
+  }

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>가격 변동 차트</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { max-width: 1300px; margin: 40px auto; font-family: sans-serif; }
+        .filters { margin-bottom: 20px; }
+        label { margin-right: 10px; }
+        .asset-btn {
+            padding: 8px 20px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #eee;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.2s, color 0.2s;
+        }
+        .asset-btn.active {
+            background: #4bc0c0;
+            color: white;
+        }
+        .chart-container { display: flex; justify-content: center; position: relative; }
+        .centerMsg {
+            display: none;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: gray;
+            font-size: 1.5em;
+            background: rgba(255,255,255,0.8);
+            padding: 20px 40px;
+            border-radius: 10px;
+            z-index: 10;
+            pointer-events: none;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h2>가격 변동 차트</h2>
+    <div class="filters">
+        <button class="asset-btn active" id="goldBtn" onclick="selectAsset('GOLD')">금</button>
+        <button class="asset-btn" id="silverBtn" onclick="selectAsset('SILVER')">은</button>
+        <label>
+            시작일:
+            <input type="date" id="startDate">
+        </label>
+        <label>
+            종료일:
+            <input type="date" id="endDate">
+        </label>
+        <button onclick="loadChart()">조회</button>
+    </div>
+    <div class="chart-container">
+        <canvas id="priceChart" width="1200" height="400"></canvas>
+        <div id="centerMsg" class="centerMsg"></div>
+    </div>
+
+    <script>
+        let chart = null;
+        let currentAsset = 'GOLD';
+
+        function selectAsset(asset) {
+            currentAsset = asset;
+            document.getElementById('goldBtn').classList.toggle('active', asset === 'GOLD');
+            document.getElementById('silverBtn').classList.toggle('active', asset === 'SILVER');
+            loadChart();
+        }
+
+        async function loadChart() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const centerMsg = document.getElementById('centerMsg');
+            centerMsg.style.display = 'none';
+
+            // 날짜 유효성 검사
+            if (startDate && endDate && startDate > endDate) {
+                centerMsg.textContent = '시작일이 종료일보다 늦을 수 없습니다.';
+                centerMsg.style.display = 'block';
+                if (chart) chart.destroy();
+                return;
+            }
+
+            const params = new URLSearchParams({
+                asset: currentAsset,
+                start_date: startDate,
+                end_date: endDate
+            });
+
+            const response = await fetch(`/golds/api/prices/?${params}`);
+            const data = await response.json();
+
+            if (chart) chart.destroy();
+
+            // 데이터가 없을 때 메시지 차트 위에 띄우기
+            if (!data.labels || data.labels.length === 0) {
+                centerMsg.textContent = '선택된 조건에 해당하는 데이터가 없습니다.';
+                centerMsg.style.display = 'block';
+                return;
+            } else {
+                centerMsg.style.display = 'none';
+            }
+
+            chart = new Chart(document.getElementById('priceChart'), {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: data.datasets
+                },
+                options: {
+                    responsive: false,
+                    plugins: {
+                        legend: { display: true },
+                        title: {
+                            display: true,
+                            text: currentAsset === 'GOLD' ? '금 가격 변동' : '은 가격 변동'
+                        }
+                    }
+                }
+            });
+        }
+
+        // 페이지 로드 시 차트 자동 표시
+        window.onload = loadChart;
+    </script>
+</body>
+</html>

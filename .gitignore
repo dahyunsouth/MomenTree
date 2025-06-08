@@ -1,0 +1,57 @@
+# ---------------------------------------------------
+# 🌍 공통 무시 항목
+# ---------------------------------------------------
+.env
+*.env
+*.log
+.DS_Store
+Thumbs.db
+
+# ---------------------------------------------------
+# 🐍 Python / Django 관련
+# ---------------------------------------------------
+__pycache__/
+*.py[cod]
+*.sqlite3
+db.sqlite3
+*.db
+*.pyo
+*.pyd
+*.egg-info/
+.envrc
+.mypy_cache/
+.pytest_cache/
+
+# Django media/static
+final-pjt-back/.env
+final-pjt-back/__pycache__/
+final-pjt-back/db.sqlite3
+
+# VSCode
+.vscode/
+
+# ---------------------------------------------------
+# 🧑‍💻 Node / Frontend 관련 (Vite + Tailwind 등)
+# ---------------------------------------------------
+node_modules/
+dist/
+build/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Vite / Vue / React 관련
+final-pjt-front/.env
+final-pjt-front/.env.local
+final-pjt-front/node_modules/
+final-pjt-front/dist/
+final-pjt-front/.DS_Store
+final-pjt-front/.vite
+
+# ---------------------------------------------------
+# 📝 기타
+# ---------------------------------------------------
+*.swp
+*.swo
+*.bak
+.idea/
